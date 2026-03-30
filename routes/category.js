@@ -7,6 +7,6 @@ router.get('/course-count', CategoryController.getCoursesCount);
 router.get('/:id', CategoryController.getById);
 router.post('/', CategoryController.store);
 router.put('/:id', CategoryController.update);
-router.delete('/:id', CategoryController.delete);
+// router.delete('/:id', CategoryController.delete);
 
 module.exports = router;

@@ -2,8 +2,9 @@ const express = require("express");
 require("dotenv").config();
 
 // Test Connection Import
-const app = express();
 const { testConnection } = require("./config/db");
+
+const app = express();
 app.use(express.json());
 
 //Routes
