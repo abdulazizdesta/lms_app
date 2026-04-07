@@ -31,7 +31,7 @@ const validateToken = (req, res, next) => {
   const token = authHeader.split(" ")[1];
 
   try {
-    const decodeToken = jwt.verify(token, process.env.JWT_SECRET_KEY);
+    const decodedToken = jwt.verify(token, process.env.JWT_SECRET_KEY);
 
     req.user = decodedToken;
     next();
@@ -39,3 +39,12 @@ const validateToken = (req, res, next) => {
     next(error);
   }
 };
+
+const validateUpdatePassword = [
+    body("email").isEmail().withMessage("Email is required").normalizeEmail(),
+    body("password")
+    .notEmpty()
+    .withMessage()
+    .islength(min : 8)
+    .withMessage("Password must be at least 8 characters long")
+]

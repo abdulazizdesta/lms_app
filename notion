@@ -1,0 +1,40 @@
+// MODELS to use update password
+const userModel = {
+    findByEamil: async (email) => {
+    },
+
+    updatePassword: async (password, id) => {
+        const [rows] = await pool.query(
+            "UPDATE users SET password = ? WHERE id = ?",
+            [password, id],
+        )
+        return rows
+    },
+}
+
+module.exports = userModel
+
+// CONTROLLERS use to update controller
+const authController = {
+    update: async (req, res, next) => {
+        try{
+            const errors = validationResult(req)
+            if(!errors.isEmpty()){
+                return res.status(400).json({
+                    errors: errors.array()
+                })
+            }
+
+            const email = req.body.email
+            const password = req.body.password
+            const newPassword = await bcrypt.hash(password, 10)
+            const checkEmail = await userModel.findByEamil(email)
+
+            if(!checkEmail){
+                return res.status
+            }
+        }catch(error){
+
+        }
+    }
+}
