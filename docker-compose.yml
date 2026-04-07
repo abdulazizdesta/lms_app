@@ -1,0 +1,18 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: lms_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: lms_db
+      MYSQL_USER: lmsuser
+      MYSQL_PASSWORD: lmspassword
+    ports:
+      - "3306:3306"
+    volumes:
+      - lms_mysql_data:/var/lib/mysql
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
+
+volumes:
+  lms_mysql_data:

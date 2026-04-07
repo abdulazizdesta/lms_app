@@ -12,10 +12,12 @@ const categoryRoutes = require("./routes/category");
 const userRoutes = require("./routes/user");
 const courseRoutes = require("./routes/course");
 const enrollmentRoutes = require('./routes/enrollment');
+const errorHandler = require("./middleware/errorHandler");
 app.use("/categories", categoryRoutes);
 app.use("/users", userRoutes);
 app.use("/courses", courseRoutes);
 app.use('/enrollments', enrollmentRoutes);
+app.use(errorHandler);
 
 const start = async () => {
   await testConnection();
