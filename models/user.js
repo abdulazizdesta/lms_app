@@ -13,6 +13,26 @@ const UserModel = {
     return result[0];
   },
 
+  findByEmail: async (email) => {
+    const [result] = await pool.query("SELECT * FROM users WHERE email = ?", [
+      email,
+    ]);
+    return result[0];
+  },
+
+  registration: async (data) => {
+    const [result] = await pool.query("INSERT INTO users SET ?", [data]);
+    return result;
+  },
+
+  login: async (data) => {
+    const [result] = await pool.query(
+      "SELECT * FROM users WHERE email = ? AND password = ?",
+      [data.email, data.password],
+    );
+    return result;
+  },
+
   store: async (data) => {
     const [result] = await pool.query("INSERT INTO users SET ?", [data]);
     return result;

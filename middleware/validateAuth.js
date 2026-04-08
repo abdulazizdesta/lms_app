@@ -3,29 +3,31 @@ const AppError = require("../utils/AppError");
 const jwt = require("jsonwebtoken");
 
 const validateRegistration = [
-  body("name").notEmpty().withMessage("Name is Required"),
-  body("email").isemail().withMessage("Email is required"),
+  body("name").notEmpty().withMessage("Name is required"),
+  body("email").notEmpty().withMessage("Email is required").isEmail().withMessage("Invalid email format").normalizeEmail(),
   body("password")
     .notEmpty()
-    .withMessage("Password is Required")
-    .islength({ min: 8 })
-    .withMessage("Password must be at least 8 character"),
+    .withMessage("Password is required")
+    .isLength({ min: 8 })
+    .withMessage("Password must be at least 8 characters"),
 ];
 
 const validateLogin = [
   body("email")
     .notEmpty()
+    .isEmail()
     .withMessage("Email is required")
-    .body("password")
+    .normalizeEmail(),
+  body("password")
     .notEmpty()
     .withMessage("Password is required"),
 ];
 
-const validateToken = (req, res, next) => {
+const validateToken = (req, _res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    throw new AppError("Token not founr", 401);
+    throw new AppError("Token not found", 401);
   }
 
   const token = authHeader.split(" ")[1];
@@ -40,11 +42,4 @@ const validateToken = (req, res, next) => {
   }
 };
 
-const validateUpdatePassword = [
-    body("email").isEmail().withMessage("Email is required").normalizeEmail(),
-    body("password")
-    .notEmpty()
-    .withMessage()
-    .islength(min : 8)
-    .withMessage("Password must be at least 8 characters long")
-]
+module.exports =  {validateRegistration, validateLogin, validateToken}

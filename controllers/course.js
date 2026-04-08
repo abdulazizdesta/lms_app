@@ -1,50 +1,73 @@
 const CourseModel = require("../models/course");
+const CategoryModel = require("../models/category");
+const UserModel = require("../models/user");
+const AppError = require("../utils/AppError");
+const { validationResult } = require("express-validator");
+const cache = require("../config/cache");
 
+const CACHE_KEY = "all_courses";
 const CourseController = {
-  getAll: async (req, res) => {
+  getAll: async (_req, res, next) => {
     try {
+      const cached = cache.get(CACHE_KEY);
+      if (cached) {
+        return res.json({
+          code: 200,
+          source: "cache",
+          message: "Succesfully get all courses",
+          data: cached,
+        });
+      }
       const courses = await CourseModel.findAll();
+      cache.set(CACHE_KEY, courses);
       res.json({
         code: 200,
-        message: "Sukses tampilkan semua data",
+        message: "Succesfully get all courses",
         data: courses,
       });
     } catch (error) {
-      res.status(500).json({
-        message: error.message,
-      });
+      next(error);
     }
   },
 
-  getById: async (req, res) => {
+  getById: async (req, res, next) => {
     try {
       const { id } = req.params;
       const courses = await CourseModel.findById(id);
       if (!courses)
-        return res
-          .status(404)
-          .json({ message: `Data dengan id ${id} tidak ditemukan` });
+        throw new AppError(`Data with id ${id} is not found`, 404);
       res.json({
         code: 200,
-        message: `Sukses tampilkan data dengan id ${id}`,
+        message: `Succesfully get data with id ${id}`,
         data: courses,
       });
     } catch (error) {
-      res.status(500).json({
-        message: error.message,
-      });
+      next(error);
     }
   },
 
-  store: async (req, res) => {
+  store: async (req, res, next) => {
     try {
+      const errors = validationResult(req);
+
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          errors: errors.array(),
+        });
+      }
+
       const { title, description, price, category_id, instructor_id } =
         req.body;
 
-      if (!title || !description || !price || !category_id || !instructor_id) {
-        return res.status(400).json({ message: "Dibutuhkan Semua Data" });
+      const findCategory = await CategoryModel.findById(category_id);
+      if (!findCategory) {
+        throw new AppError("Category not found", 404);
       }
 
+      const instructor = await UserModel.findById(instructor_id);
+      if (!instructor) {
+        throw new AppError("Instructor not found", 404);
+      }
       const data = {
         title: title,
         description: description,
@@ -55,8 +78,10 @@ const CourseController = {
 
       const courses = await CourseModel.store(data);
 
+      cache.del(CACHE_KEY);
+
       res.status(201).json({
-        message: "Sukses menambahkan data",
+        message: "Succesfully created data",
         data: {
           title: data.title,
           description: data.description,
@@ -66,13 +91,11 @@ const CourseController = {
         },
       });
     } catch (error) {
-      res.status(500).json({
-        message: error.message,
-      });
+      next(error);
     }
   },
 
-  update: async (req, res) => {
+  update: async (req, res, next) => {
     try {
       const { id } = req.params;
       const { title, description, price, category_id, instructor_id } =
@@ -80,10 +103,7 @@ const CourseController = {
 
       const oldCourse = await CourseModel.findById(id);
 
-      if (!oldCourse)
-        return res
-          .status(404)
-          .json({ message: `Tidak ada Course dengan id ${id}` });
+      if (!oldCourse) throw new AppError(`Data with ${id} is not found`, 404);
 
       const data = {
         title: title ? title : oldCourse.title,
@@ -93,7 +113,9 @@ const CourseController = {
         instructor_id: instructor_id ? instructor_id : oldCourse.instructor_id,
       };
 
-      const course = await CourseModel.update(id, data);
+      await CourseModel.update(id, data);
+
+      cache.del(CACHE_KEY);
 
       res.json({
         code: 200,
@@ -105,40 +127,36 @@ const CourseController = {
           description: data.description,
           price: data.price,
           category_id: data.category_id,
-          instructor_id: data.instructor_id
+          instructor_id: data.instructor_id,
         },
       });
     } catch (error) {
-      res.status(500).json({
-        message: error.message,
-      });
+      next(error);
     }
   },
 
-  delete: async (req, res) => {
+  delete: async (req, res, next) => {
     try {
       const { id } = req.params;
       const oldCourse = await CourseModel.findById(id);
 
-      if (!oldCourse)
-        return res
-          .status(404)
-          .json({ message: `Tidak ada Course dengan id ${id}` });
+      if (!oldCourse) throw new AppError(`Data with ${id} is not found`, 404);
 
-      const courses = await CourseModel.delete(id);
+      await CourseModel.delete(id);
+
+      cache.del(CACHE_KEY);
+
       res.json({
         code: 200,
         message: `Sukses hapus data dengan id ${id}`,
         course: oldCourse,
       });
     } catch (error) {
-      res.status(500).json({
-        message: error.message,
-      });
+      next(error);
     }
   },
 
-  getStudentsCount: async (req, res) => {
+  getStudentsCount: async (_req, res, next) => {
     try {
       const countStudents = await CourseModel.getStudentsCount();
       res.status(200).json({
@@ -146,11 +164,11 @@ const CourseController = {
         data: countStudents,
       });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      next(error);
     }
   },
 
-showCategoryName: async (req, res) => {
+  showCategoryName: async (_req, res, next) => {
     try {
       const showCategory = await CourseModel.showCategoryName();
       res.status(200).json({
@@ -158,7 +176,7 @@ showCategoryName: async (req, res) => {
         data: showCategory,
       });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      next(error);
     }
   },
 };
