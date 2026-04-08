@@ -32,10 +32,12 @@ const EnrollmentModel = {
         enrollments.id,
         users.name AS student_name,
         courses.title AS course_title,
+        categories.name AS category_name,
         enrollments.enrolled_at
       FROM enrollments
-      LEFT JOIN users ON users.id = enrollments.user_id
-      LEFT JOIN courses ON courses.id = enrollments.course_id
+      JOIN users ON users.id = enrollments.user_id
+      JOIN courses ON courses.id = enrollments.course_id
+      LEFT JOIN categories ON categories.id = courses.category_id
     `);
     return result;
   }

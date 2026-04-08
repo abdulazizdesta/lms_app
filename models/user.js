@@ -7,9 +7,7 @@ const UserModel = {
   },
 
   findById: async (id) => {
-    const [result] = await pool.query("SELECT * FROM users WHERE id = ?", [
-      id,
-    ]);
+    const [result] = await pool.query("SELECT * FROM users WHERE id = ?", [id]);
     return result[0];
   },
 
@@ -47,9 +45,7 @@ const UserModel = {
   },
 
   delete: async (id) => {
-    const [result] = await pool.query("DELETE FROM users WHERE id = ?", [
-      id,
-    ]);
+    const [result] = await pool.query("DELETE FROM users WHERE id = ?", [id]);
     return result;
   },
 
@@ -57,7 +53,14 @@ const UserModel = {
     const [result] = await pool.query(
       "SELECT users.id, users.name, users.role, COUNT(enrollments.id) AS total_enrollments FROM users LEFT JOIN enrollments ON enrollments.user_id= users.id WHERE users.role = 'student' GROUP BY users.id, users.name, users.role",
     );
-    return result
+    return result;
+  },
+
+  getInstructorCourseCount: async () => {
+    const [result] = await pool.query(
+      "SELECT users.id, users.name AS instructor_name, COUNT(courses.id) AS total_courses FROM users JOIN courses ON courses.instructor_id = users.id WHERE users.role = 'instructor' GROUP BY users.id, users.name",
+    );
+    return result;
   },
 };
 

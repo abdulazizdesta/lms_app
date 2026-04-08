@@ -12,9 +12,6 @@ const validateCourse = [
   .withMessage("Price is required")
   .isNumeric()
   .withMessage("Price must be a number"),
-  body("category_id")
-  .notEmpty()
-  .withMessage("Category is required"),
   body("instructor_id")
   .notEmpty()
   .withMessage("Instructor is required")

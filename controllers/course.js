@@ -5,7 +5,10 @@ const AppError = require("../utils/AppError");
 const { validationResult } = require("express-validator");
 const cache = require("../config/cache");
 
-const CACHE_KEY = "all_courses";
+const CACHE_KEY = "all_courses"
+const CACHE_KEY_REGIS_COUNT = "students_count"
+const CACHE_KEY_CATEGORY = "courses_with_category"
+
 const CourseController = {
   getAll: async (_req, res, next) => {
     try {
@@ -22,6 +25,7 @@ const CourseController = {
       cache.set(CACHE_KEY, courses);
       res.json({
         code: 200,
+        source: "database",
         message: "Succesfully get all courses",
         data: courses,
       });
@@ -33,13 +37,24 @@ const CourseController = {
   getById: async (req, res, next) => {
     try {
       const { id } = req.params;
-      const courses = await CourseModel.findById(id);
-      if (!courses)
-        throw new AppError(`Data with id ${id} is not found`, 404);
+      const cacheKey = `course_${id}`;
+      const cached = cache.get(cacheKey)
+      if(cached){
+        return res.json({
+          source: "cache",
+          message: `Succesfully get course with id  ${id}`,
+          data: cached,
+        })
+      }
+      const course = await CourseModel.findById(id);
+      if (!course)
+        throw new AppError(`Course with id ${id} is not found`, 404);
+      cache.set(cacheKey, course)
       res.json({
         code: 200,
-        message: `Succesfully get data with id ${id}`,
-        data: courses,
+        source: "database",
+        message: `Succesfully get course with id ${id}`,
+        data: course,
       });
     } catch (error) {
       next(error);
@@ -116,6 +131,7 @@ const CourseController = {
       await CourseModel.update(id, data);
 
       cache.del(CACHE_KEY);
+      cache.del(`course_${id}`)
 
       res.json({
         code: 200,
@@ -145,6 +161,9 @@ const CourseController = {
       await CourseModel.delete(id);
 
       cache.del(CACHE_KEY);
+      cache.del(`course_${id}`)
+      cache.del(CACHE_KEY_REGIS_COUNT);
+      cache.del(CACHE_KEY_CATEGORY);
 
       res.json({
         code: 200,
@@ -156,23 +175,50 @@ const CourseController = {
     }
   },
 
-  getStudentsCount: async (_req, res, next) => {
+  getRegistrant: async (_req, res, next) => {
     try {
-      const countStudents = await CourseModel.getStudentsCount();
+      const cached = cache.get(CACHE_KEY_REGIS_COUNT)
+      if (cached) {
+        return res.json({
+          code: 200,
+          source: "cache",
+          message: "Succesfuly get total registrant per course",
+          data: cached,
+        })
+      }
+
+      const countRegistrant = await CourseModel.getStudentsCount()
+      cache.set(CACHE_KEY_REGIS_COUNT, countRegistrant)
+      
       res.status(200).json({
-        message: "Sukses tampilkan jumlah Pendaftaran per Course",
-        data: countStudents,
-      });
+        code: 200,
+        source: "database",
+        message: "Succesfuly get total registrant per course",
+        data: countRegistrant,
+      })
     } catch (error) {
-      next(error);
+      next(error)
     }
   },
 
   showCategoryName: async (_req, res, next) => {
     try {
+      const cached = cache.get(CACHE_KEY_CATEGORY)
+      if (cached) {
+        return res.json({
+          code: 200,
+          source: "cache",
+          message: "Succesfuly get category",
+          data: cached,
+        })
+      }
       const showCategory = await CourseModel.showCategoryName();
+      cache.set(CACHE_KEY_CATEGORY, showCategory)
+
       res.status(200).json({
-        message: "Sukses tampilkan Data",
+        code: 200,
+        source: "database",
+        message: "Succesfuly get category",
         data: showCategory,
       });
     } catch (error) {
