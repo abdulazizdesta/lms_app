@@ -8,48 +8,103 @@ Tech Stack
 
 - Runtime: Node.js
 - Framework: Express.js
-- Database: MySQL
+- Database: MySQL menggunakan Docker
 - Library: mysql2, dotenv, nodemon
+- Caching: redis, node-cache
+- Authentication bycript, jsonwebtoken
+
+## Struktur Project
 
 ## Struktur Project
 
 lms_app/
 ├── config/
-│   └── db.js
+│   ├── db.js
+│   ├── cache.js
+│   └── redis.js
 ├── controllers/
+│   ├── auth.js
 │   ├── category.js
 │   ├── course.js
 │   ├── enrollment.js
 │   └── user.js
+├── middleware/
+│   ├── errorHandler.js
+│   ├── validateAuth.js
+│   ├── validateCategory.js
+│   ├── validateCourse.js
+│   ├── validateEnrollment.js
+│   └── validateUser.js
 ├── models/
 │   ├── category.js
 │   ├── course.js
 │   ├── enrollment.js
 │   └── user.js
 ├── routes/
+│   ├── auth.js
 │   ├── category.js
 │   ├── course.js
 │   ├── enrollment.js
 │   └── user.js
+├── utils/
+│   └── AppError.js
 ├── .env
 ├── .gitignore
+├── docker-compose.yml
+├── schema.sql
 ├── app.js
 └── package.json
 
 ## Cara Menjalankan Project
 
-1. Clone repository
+1. Clone Repository**
 
-<!-- terminal prompt -->
+Buka terminal dan jalankan perintah berikut:
 
-- git clone <url-repository>
-- cd lms_app
+    git clone <url-repository>
+    cd lms_app
 
-2. Install dependencies
+2. Install Dependencies**
 
-<!-- terminal prompt -->
+    npm install
 
-npm install
+3. Setup Environment Variable**
+
+Buat file .env di root folder dan isi dengan konfigurasi berikut:
+
+    # Database
+    DB_HOST=localhost
+    DB_USER=lmsuser
+    DB_PASS=lmspassword
+    DB_NAME=lms_db
+    DB_PORT=3306
+
+    # Server
+    PORT=3000
+    MODE=Development
+
+    # JWT
+    JWT_SECRET_KEY=your_secret_key_here
+    JWT_EXPIRES_IN=1d
+
+    # Redis
+    REDIS_URL=redis://localhost:6379
+
+> Jangan lupa ganti JWT_SECRET_KEY dengan string acak yang panjang dan unik.
+
+4. Jalankan Database dengan Docker**
+
+Pastikan Docker Desktop sudah berjalan, lalu jalankan perintah berikut:
+
+    docker-compose up -d
+
+MySQL dan Redis akan otomatis berjalan di background. Tabel database akan dibuat secara otomatis dari file schema.sql.
+
+5. Jalankan Server
+
+    npm run dev
+
+Server berjalan di http://localhost:3000
 
 3. Setup environment variable
 Buat file .env di root folder:
@@ -103,7 +158,12 @@ CREATE TABLE enrollments (
   FOREIGN KEY (course_id) REFERENCES courses(id)
 );
 
-5. Jalankan server
+5. MiddleWare Yang digunakan
+
+- Autentikasi dengan validasi token
+- Validasi input data untuk setiap feature
+
+6. Jalankan server
 
 # Development (auto-restart)
 npm run dev
@@ -112,7 +172,7 @@ npm run dev
 npm start
 
 
-Server berjalan di `http://localhost:3000`
+Server berjalan di http://localhost:3000
 
 
 ## Daftar Endpoint API

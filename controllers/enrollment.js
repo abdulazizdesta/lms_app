@@ -1,5 +1,5 @@
 const EnrollmentModel = require("../models/enrollment");
-const redis = require("../config/redisClient");
+const redis = require("../config/redis");
 const AppError = require("../utils/AppError");
 const { validationResult } = require("express-validator");
 

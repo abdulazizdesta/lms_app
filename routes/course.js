@@ -5,7 +5,7 @@ const validateAuth = require("../middleware/validateAuth");
 const { validateCourse } = require('../middleware/validateCourse');
 
 router.get('/', CourseController.getAll);
-router.get('/students-count', CourseController.getStudentsCount);
+router.get('/students-count', CourseController.getRegistrant);
 router.get('/show-category', CourseController.showCategoryName);
 router.get('/:id', CourseController.getById);
 router.post('/', validateAuth.validateToken, validateCourse, CourseController.store);

@@ -2,17 +2,17 @@ const { pool } = require("../config/db");
 
 const UserModel = {
   findAll: async () => {
-    const [result] = await pool.query("SELECT * FROM users");
+    const [result] = await pool.query("SELECT name, email, role FROM users");
     return result;
   },
 
   findById: async (id) => {
-    const [result] = await pool.query("SELECT * FROM users WHERE id = ?", [id]);
+    const [result] = await pool.query("SELECT name, email, role FROM users WHERE id = ?", [id]);
     return result[0];
   },
 
   findByEmail: async (email) => {
-    const [result] = await pool.query("SELECT * FROM users WHERE email = ?", [
+    const [result] = await pool.query("SELECT name, email, role FROM users WHERE email = ?", [
       email,
     ]);
     return result[0];
