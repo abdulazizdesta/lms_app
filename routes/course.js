@@ -9,7 +9,7 @@ router.get('/students-count', CourseController.getRegistrant);
 router.get('/show-category', CourseController.showCategoryName);
 router.get('/:id', CourseController.getById);
 router.post('/', validateAuth.validateToken, validateCourse, CourseController.store);
-router.put('/:id', validateAuth.validateToken, validateCourse, CourseController.update);
+router.put('/:id', validateAuth.validateToken, CourseController.update);
 router.delete('/:id', validateAuth.validateToken, CourseController.delete);
 
 module.exports = router;

@@ -6,4 +6,10 @@ const validateCategory = [
     .isLength({ min: 3 }).withMessage("Name must be at least 3 characters"),
 ];
 
-module.exports = { validateCategory }; 
+const validateCategoryUpdate = [
+  body("name")
+    .optional()
+    .isLength({ min: 3 }).withMessage("Name must be at least 3 characters"),
+];
+
+module.exports = { validateCategory, validateCategoryUpdate }; 

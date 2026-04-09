@@ -8,6 +8,7 @@ const cache = require("../config/cache");
 const CACHE_KEY = "all_courses"
 const CACHE_KEY_REGIS_COUNT = "students_count"
 const CACHE_KEY_CATEGORY = "courses_with_category"
+const CACHE_KEY_INSTRUCTOR_COURSE_COUNT = "instructor_course_count" 
 
 const CourseController = {
   getAll: async (_req, res, next) => {
@@ -94,6 +95,9 @@ const CourseController = {
       const courses = await CourseModel.store(data);
 
       cache.del(CACHE_KEY);
+      cache.del(CACHE_KEY_CATEGORY);
+      cache.del(CACHE_KEY_REGIS_COUNT);
+      cache.del(CACHE_KEY_INSTRUCTOR_COURSE_COUNT);
 
       res.status(201).json({
         message: "Succesfully created data",
@@ -131,6 +135,9 @@ const CourseController = {
       await CourseModel.update(id, data);
 
       cache.del(CACHE_KEY);
+      cache.del(CACHE_KEY_CATEGORY);
+      cache.del(CACHE_KEY_REGIS_COUNT);
+      cache.del(CACHE_KEY_INSTRUCTOR_COURSE_COUNT);
       cache.del(`course_${id}`)
 
       res.json({
@@ -164,6 +171,7 @@ const CourseController = {
       cache.del(`course_${id}`)
       cache.del(CACHE_KEY_REGIS_COUNT);
       cache.del(CACHE_KEY_CATEGORY);
+      cache.del(CACHE_KEY_INSTRUCTOR_COURSE_COUNT);
 
       res.json({
         code: 200,

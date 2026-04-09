@@ -75,6 +75,10 @@ const UserController = {
       }
 
       const { name, email, password, role } = req.body;
+      const existingUser = await UserModel.findByEmail(email)
+      if (existingUser) {
+        throw new AppError("Email already registered", 400)
+      }
       const hashPassword = await bcrypt.hash(password, 10);
 
       const data = {

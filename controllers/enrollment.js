@@ -1,12 +1,17 @@
 const EnrollmentModel = require("../models/enrollment");
+const UserModel = require("../models/user");
+const CourseModel = require("../models/course");
 const redis = require("../config/redis");
 const AppError = require("../utils/AppError");
 const { validationResult } = require("express-validator");
+const cache = require("../config/cache");
 
 const REDIS_KEY = "all_enrollments";
 const REDIS_KEY_DETAIL = "enrollment_details";
+const CACHE_KEY_ENROLLMENT_COUNT = "enrollment_count_per_user";
+
 const EnrollmentController = {
-  getAll: async (req, res, next) => {
+  getAll: async (_req, res, next) => {
     try {
       const cachedEnrollments = await redis.get(REDIS_KEY);
       if (cachedEnrollments) {
@@ -43,7 +48,7 @@ const EnrollmentController = {
       }
 
       const enrollment = await EnrollmentModel.findById(id);
-      if (!enrollment){
+      if (!enrollment) {
         throw new AppError(`Enrollment with id ${id} is not found`, 404);
       }
       await redis.set(redisKey, JSON.stringify(enrollment), { EX: 60 });
@@ -67,10 +72,22 @@ const EnrollmentController = {
       }
       const { user_id, course_id } = req.body;
       const data = { user_id, course_id };
+      const user = await UserModel.findById(user_id);
+      if (!user) {
+        throw new AppError("User not found", 404);
+      }
+      if (user.role !== "student") {
+        throw new AppError("Only students can enroll in a course", 400);
+      }
+      const course = await CourseModel.findById(course_id);
+      if (!course) {
+        throw new AppError("Course not found", 404);
+      }
       const enrollment = await EnrollmentModel.store(data);
 
-      cache.del(REDIS_KEY);
-      cache.del(REDIS_KEY_DETAIL);
+      await redis.del(REDIS_KEY);
+      await redis.del(REDIS_KEY_DETAIL);
+      cache.del(CACHE_KEY_ENROLLMENT_COUNT);
 
       res.status(201).json({
         message: "successfully create enrollment",
@@ -90,11 +107,26 @@ const EnrollmentController = {
         });
       }
       const { id } = req.params;
-      const { user_id, course_id } = req.body;
 
       const oldEnrollment = await EnrollmentModel.findById(id);
-      if (!oldEnrollment){
+      if (!oldEnrollment) {
         throw new AppError(`Enrollment with id ${id} is not found`, 404);
+      }
+
+      const { user_id, course_id } = req.body;
+      if (user_id) {
+        const user = await UserModel.findById(user_id);
+        if (!user) {
+          throw new AppError("User not found", 404);
+        }
+        if (user.role !== "student") {
+          throw new AppError("Only students can enroll in a course", 400);
+        }
+      }
+
+      if (course_id) {
+        const course = await CourseModel.findById(course_id);
+        if (!course) throw new AppError("Course not found", 404);
       }
 
       const data = {
@@ -103,8 +135,9 @@ const EnrollmentController = {
       };
 
       await EnrollmentModel.update(id, data);
-      cache.del(REDIS_KEY);
-      cache.del(REDIS_KEY_DETAIL);
+      await redis.del(REDIS_KEY);
+      await redis.del(REDIS_KEY_DETAIL);
+      cache.del(CACHE_KEY_ENROLLMENT_COUNT);
 
       res.status(200).json({
         message: `Successfully update enrollment with id ${id}`,
@@ -119,14 +152,17 @@ const EnrollmentController = {
     try {
       const { id } = req.params;
       const oldEnrollment = await EnrollmentModel.findById(id);
-      if (!oldEnrollment){
+      if (!oldEnrollment) {
         throw new AppError(`Enrollment with id ${id} is not found`, 404);
       }
-      cache.del(REDIS_KEY);
-      cache.del(REDIS_KEY_DETAIL);
+      await redis.del(REDIS_KEY);
+      await redis.del(REDIS_KEY_DETAIL);
+      cache.del(CACHE_KEY_ENROLLMENT_COUNT);
 
       await EnrollmentModel.delete(id);
-      res.status(200).json({ message: `Successfully deleted enrollment with id ${id}` });
+      res
+        .status(200)
+        .json({ message: `Successfully deleted enrollment with id ${id}` });
     } catch (error) {
       next(error);
     }
@@ -143,8 +179,10 @@ const EnrollmentController = {
         });
       }
       const enrollments = await EnrollmentModel.getDetail();
-      await redis.set(REDIS_KEY_DETAIL, JSON.stringify(enrollments), { EX: 60 });
-      
+      await redis.set(REDIS_KEY_DETAIL, JSON.stringify(enrollments), {
+        EX: 60,
+      });
+
       res.status(200).json({
         message: "Successfully get enrollment details",
         source: "database",
